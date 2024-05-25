@@ -1,6 +1,6 @@
 {
-  "name": "configjs",
-  "version": "1.0.0",
+  "name": "@teikun-86/config-js",
+  "version": "0.1.0",
   "description": "File based config loader for Javascript",
   "main": "dist/index.js",
   "types": "dist/types.d.ts",
@@ -21,8 +21,6 @@
   "author": "Aziz Febriyanto <azizfebriyanto12@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "fs": "^0.0.1-security",
-    "path": "^0.12.7",
     "typescript": "^5.4.5"
   },
   "devDependencies": {
