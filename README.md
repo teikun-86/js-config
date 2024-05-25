@@ -23,7 +23,7 @@ npm install @teikun-86/config-js
     You need to initialize the config loader with the path to your configuration directory.
     ```typescript
     import * as path from 'path';
-    import { initializeConfigLoader } from 'config-js';
+    import { initializeConfigLoader } from '@teikun-86/config-js';
 
     // Initialize the ConfigLoader with the configuration directory
     initializeConfigLoader(path.resolve(__dirname, '../config'));
@@ -31,7 +31,7 @@ npm install @teikun-86/config-js
 2. Access Configuration Values
     You can access configuration values using the `config` function. The configuration keys are dot-notated strings representing the nested structure of your configuration files.
     ```typescript
-    import { config } from 'config-js';
+    import { config } from '@teikun-86/config-js';
 
     // Example usage of the config function after initialization
     const appName: string = config('app.name');
@@ -48,7 +48,7 @@ npm install @teikun-86/config-js
 3. Change Configuration Directory
     If you need to change the configuration directory at runtime, you can use the `setConfigDir` method.
     ```typescript
-    import { getConfigLoader } from 'config-js';
+    import { getConfigLoader } from '@teikun-86/config-js';
 
     const configLoader = getConfigLoader();
 
