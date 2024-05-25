@@ -14,7 +14,7 @@ A simple and flexible configuration loader for Node.js applications, inspired by
 Install the package using npm:
 
 ```bash
-npm install config-js
+npm install @teikun-86/config-js
 ```
 
 ## Usage
