@@ -1,0 +1,31 @@
+{
+  "name": "configjs",
+  "version": "1.0.0",
+  "description": "File based config loader for Javascript",
+  "main": "dist/index.js",
+  "types": "dist/types.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc --outDir ./dist",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "config-js",
+    "config",
+    "js-config",
+    "config",
+    "js",
+    "js",
+    "config"
+  ],
+  "author": "Aziz Febriyanto <azizfebriyanto12@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12"
+  }
+}
