@@ -1,63 +1,68 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getConfigLoader = exports.initializeConfigLoader = void 0;
+exports.config = void 0;
 const fs = require("fs");
 const path = require("path");
-class ConfigLoader {
-    constructor(configDir) {
-        this.cache = {};
-        this.configDir = configDir;
-        if (!fs.existsSync(this.configDir)) {
-            throw new Error(`Configuration directory does not exist: ${this.configDir}`);
-        }
+let configDir = null;
+let cache = {};
+const initializeConfigLoader = (directory) => {
+    if (!fs.existsSync(directory)) {
+        throw new Error(`Configuration directory ${directory} does not exist.`);
     }
-    loadConfig(file) {
-        if (this.cache[file]) {
-            return this.cache[file];
-        }
-        const filePath = path.join(this.configDir, `${file}.json`);
-        if (fs.existsSync(filePath)) {
-            const configFile = fs.readFileSync(filePath, "utf-8");
-            const config = JSON.parse(configFile);
-            this.cache[file] = config;
-            return config;
-        }
-        else {
-            throw new Error(`Configuration file not found: ${filePath}`);
-        }
-    }
-    get(key, defaultValue = null) {
-        const [file, ...pathSegments] = key.split(".");
-        const config = this.loadConfig(file);
-        let value = config;
-        for (const segment of pathSegments) {
-            if (value[segment] !== undefined) {
-                value = value[segment];
-            }
-            else {
-                return defaultValue;
-            }
-        }
-        return value;
-    }
-    setConfigDir(configDir) {
-        if (!fs.existsSync(configDir)) {
-            throw new Error(`Configuration directory does not exist: ${configDir}`);
-        }
-        this.configDir = configDir;
-        this.cache = {}; // Clear the cache when changing the directory
-    }
-}
-// Create a singleton instance of ConfigLoader
-let configLoader;
-const initializeConfigLoader = (configDir) => {
-    configLoader = new ConfigLoader(configDir);
+    configDir = directory;
+    cache = {};
 };
-exports.initializeConfigLoader = initializeConfigLoader;
+const loadConfigFile = (filePath) => {
+    if (fs.existsSync(filePath)) {
+        return require(filePath);
+    }
+    const tsFilePath = filePath.replace(/\.js$/, ".ts");
+    if (fs.existsSync(tsFilePath)) {
+        return require(tsFilePath).default;
+    }
+    const jsonFilePath = tsFilePath.replace(/\.ts$/, ".json");
+    if (fs.existsSync(jsonFilePath)) {
+        return require(jsonFilePath);
+    }
+    throw new Error(`Configuration file ${filePath} or ${tsFilePath} or ${jsonFilePath} does not exist.`);
+};
 const getConfigLoader = () => {
-    if (!configLoader) {
-        throw new Error("ConfigLoader has not been initialized. Call initializeConfigLoader first.");
+    if (!configDir) {
+        throw new Error("ConfigLoader has not been initialized with a configuration directory.");
     }
-    return configLoader;
+    return {
+        setConfigDir: (directory) => {
+            if (!fs.existsSync(directory)) {
+                throw new Error(`Configuration directory ${directory} does not exist.`);
+            }
+            configDir = directory;
+            cache = {};
+        },
+        get: (key, defaultValue) => {
+            if (!configDir) {
+                throw new Error("ConfigLoader has not been initialized with a configuration directory.");
+            }
+            const keys = key.split(".");
+            const configFileName = keys.shift();
+            const configFilePath = path.join(configDir, `${configFileName}.js`);
+            if (!(configFilePath in cache)) {
+                cache[configFilePath] = loadConfigFile(configFilePath);
+            }
+            let result = cache[configFilePath];
+            for (const k of keys) {
+                result = result[k];
+                if (result === undefined) {
+                    return defaultValue;
+                }
+            }
+            return result;
+        }
+    };
 };
-exports.getConfigLoader = getConfigLoader;
+const config = (key, defaultValue = null) => {
+    const loader = getConfigLoader();
+    return loader.get(key, defaultValue);
+};
+exports.config = config;
+config.initializeConfigLoader = initializeConfigLoader;
+config.getConfigLoader = getConfigLoader;

@@ -1,74 +1,96 @@
 import * as fs from "fs";
 import * as path from "path";
-import { Config } from "./types";
 
-class ConfigLoader {
-	private configDir: string;
-	private cache: Config = {};
-
-	constructor(configDir: string) {
-		this.configDir = configDir;
-		if (!fs.existsSync(this.configDir)) {
-			throw new Error(
-				`Configuration directory does not exist: ${this.configDir}`
-			);
-		}
-	}
-
-	private loadConfig<T>(file: string): T {
-		if (this.cache[file]) {
-			return this.cache[file];
-		}
-
-		const filePath = path.join(this.configDir, `${file}.json`);
-		if (fs.existsSync(filePath)) {
-			const configFile = fs.readFileSync(filePath, "utf-8");
-			const config = JSON.parse(configFile);
-			this.cache[file] = config;
-			return config;
-		} else {
-			throw new Error(`Configuration file not found: ${filePath}`);
-		}
-	}
-
-	get<T>(key: string, defaultValue: any = null): T {
-		const [file, ...pathSegments] = key.split(".");
-		const config = this.loadConfig<Config[keyof Config]>(file);
-
-		let value: any = config;
-		for (const segment of pathSegments) {
-			if (value[segment] !== undefined) {
-				value = value[segment];
-			} else {
-				return defaultValue;
-			}
-		}
-		return value;
-	}
-
-	setConfigDir(configDir: string): void {
-		if (!fs.existsSync(configDir)) {
-			throw new Error(
-				`Configuration directory does not exist: ${configDir}`
-			);
-		}
-		this.configDir = configDir;
-		this.cache = {}; // Clear the cache when changing the directory
-	}
+export interface ConfigLoader {
+	setConfigDir(directory: string): void;
+	get<T>(key: string, defaultValue?: T): T;
 }
 
-// Create a singleton instance of ConfigLoader
-let configLoader: ConfigLoader;
+export interface Config {
+	<T = any>(key: string, defaultValue?: any): T;
+	initializeConfigLoader: (directory: string) => void;
+	getConfigLoader: () => ConfigLoader;
+}
 
-export const initializeConfigLoader = (configDir: string): void => {
-	configLoader = new ConfigLoader(configDir);
+let configDir: string | null = null;
+let cache: Record<string, any> = {};
+
+const initializeConfigLoader = (directory: string): void => {
+	if (!fs.existsSync(directory)) {
+		throw new Error(`Configuration directory ${directory} does not exist.`);
+	}
+	configDir = directory;
+	cache = {};
 };
 
-export const getConfigLoader = (): ConfigLoader => {
-	if (!configLoader) {
+const loadConfigFile = (filePath: string): any => {
+	if (fs.existsSync(filePath)) {
+		return require(filePath);
+	}
+	const tsFilePath = filePath.replace(/\.js$/, ".ts");
+	if (fs.existsSync(tsFilePath)) {
+		return require(tsFilePath).default;
+	}
+	const jsonFilePath = tsFilePath.replace(/\.ts$/, ".json");
+	if (fs.existsSync(jsonFilePath)) {
+		return require(jsonFilePath);
+	}
+	throw new Error(`Configuration file ${filePath} or ${tsFilePath} or ${jsonFilePath} does not exist.`);
+};
+
+const getConfigLoader = (): ConfigLoader => {
+	if (!configDir) {
 		throw new Error(
-			"ConfigLoader has not been initialized. Call initializeConfigLoader first."
+			"ConfigLoader has not been initialized with a configuration directory."
 		);
 	}
-	return configLoader;
+
+	return {
+		setConfigDir: (directory: string): void => {
+			if (!fs.existsSync(directory)) {
+				throw new Error(
+					`Configuration directory ${directory} does not exist.`
+				);
+			}
+			configDir = directory;
+			cache = {};
+		},
+
+		get: <T>(key: string, defaultValue?: T): T => {
+			if (!configDir) {
+				throw new Error(
+					"ConfigLoader has not been initialized with a configuration directory."
+				);
+			}
+
+			const keys = key.split(".");
+			const configFileName = keys.shift()!;
+			const configFilePath = path.join(configDir, `${configFileName}.js`);
+
+			if (!(configFilePath in cache)) {
+				cache[configFilePath] = loadConfigFile(configFilePath);
+			}
+
+			let result = cache[configFilePath];
+
+			for (const k of keys) {
+				result = result[k];
+				if (result === undefined) {
+					return defaultValue as T;
+				}
+			}
+
+			return result as T;
+		}
+	};
 };
+
+const config: Config = <T = any>(key: string, defaultValue: any = null): T => {
+	const loader = getConfigLoader();
+	return loader.get<T>(key, defaultValue);
+};
+
+config.initializeConfigLoader = initializeConfigLoader;
+config.getConfigLoader = getConfigLoader;
+
+export { config };

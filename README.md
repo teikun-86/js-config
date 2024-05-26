@@ -1,106 +1,180 @@
-# config-js
+# @teikun-86/config-js
 
-A simple and flexible configuration loader for Node.js applications, inspired by Laravel's configuration system.
+A flexible configuration loader for Node.js projects, supporting both JavaScript and TypeScript configuration files. This package allows you to easily manage configuration settings in your application with a simple API.
 
-## Features
+## Table of Contents
 
-- Load configuration from JSON files
-- Supports nested configuration keys
-- Caching of configuration values for better performance
-- Dynamically change configuration directory
+- [Table of Contents](#table-of-contents)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Initial Setup](#initial-setup)
+  - [Loading Configuration Values](#loading-configuration-values)
+  - [Changing Configuration Directory](#changing-configuration-directory)
+  - [Configuration File Formats](#configuration-file-formats)
+- [API](#api)
+  - [`config(key: string, defaultValue?: any): any`](#configkey-string-defaultvalue-any-any)
+  - [`config.initializeConfigLoader(directory: string): void`](#configinitializeconfigloaderdirectory-string-void)
+  - [`config.getConfigLoader(): ConfigLoader`](#configgetconfigloader-configloader)
+- [ConfigLoader Interface](#configloader-interface)
+  - [`setConfigDir(directory: string): void`](#setconfigdirdirectory-string-void)
+  - [`get<T>(key: string, defaultValue?: T): T`](#gettkey-string-defaultvalue-t-t)
+- [Example](#example)
+- [License](#license)
+- [Contributing](#contributing)
+- [Acknowledgements](#acknowledgements)
+
 
 ## Installation
 
-Install the package using npm:
+To install the package, use npm:
 
-```bash
-npm install @teikun-86/config-js
+```sh
+npm install config-js
+```
+
+Or using yarn:
+
+```sh
+yarn add config-js
 ```
 
 ## Usage
-1. Initialize the Config Loader
 
-    You need to initialize the config loader with the path to your configuration directory.
-    ```typescript
-    import * as path from 'path';
-    import { initializeConfigLoader } from '@teikun-86/config-js';
+### Initial Setup
 
-    // Initialize the ConfigLoader with the configuration directory
-    initializeConfigLoader(path.resolve(__dirname, '../config'));
-    ```
-2. Access Configuration Values
-    You can access configuration values using the `config` function. The configuration keys are dot-notated strings representing the nested structure of your configuration files.
-    ```typescript
-    import { config } from '@teikun-86/config-js';
+First, you need to initialize the configuration loader with the directory where your configuration files are located. You can do this using the `initializeConfigLoader` method.
 
-    // Example usage of the config function after initialization
-    const appName: string = config('app.name');
-    const appEnv: string = config('app.env');
-    const dbHost: string = config('database.host');
-    const dbPort: number = config('database.port');
+```typescript
+import { config } from '@teikun-86/config-js';
+import * as path from 'path';
 
-    console.log(`App Name: ${appName}`);
-    console.log(`App Environment: ${appEnv}`);
-    console.log(`Database Host: ${dbHost}`);
-    console.log(`Database Port: ${dbPort}`);
+// Initialize the configuration loader with the directory path
+config.initializeConfigLoader(path.resolve(__dirname, 'config'));
+```
 
-    ```
-3. Change Configuration Directory
-    If you need to change the configuration directory at runtime, you can use the `setConfigDir` method.
-    ```typescript
-    import { getConfigLoader } from '@teikun-86/config-js';
+### Loading Configuration Values
 
-    const configLoader = getConfigLoader();
+Once the loader is initialized, you can use the `config` function to retrieve configuration values. The `config` function takes a key (in dot notation) and an optional default value.
 
-    try {
-    configLoader.setConfigDir(path.resolve(__dirname, '../new-config'));
-    const newAppName: string = config('app.name');
-    console.log(`New App Name: ${newAppName}`);
-    } catch (error) {
-    console.error(error.message);
-    }
-    ```
+```typescript
+const appName = config<string>('app.name');
+const appEnv = config<string>('app.env');
+const dbHost = config<string>('database.host');
+const dbPort = config<number>('database.port');
 
-## API
-### `initializeConfigLoader(configDir: string): void`
-Initializes the configuration loader with the given configuration directory. This must be called before accessing any configuration values.
+console.log(`App Name: ${appName}`);
+console.log(`App Environment: ${appEnv}`);
+console.log(`Database Host: ${dbHost}`);
+console.log(`Database Port: ${dbPort}`);
+```
 
-### `config<T>(key: string, defaultValue?: any): T`
-Retrieves the configuration value for the given key. Returns `defaultValue` if the key is not found.
+### Changing Configuration Directory
 
-### `ConfigLoader`
-#### `setConfigDir(configDir: string): void`
-Sets a new configuration directory and clears the cache. Throws an error if the directory does not exist.
+If you need to change the configuration directory at runtime, you can use the `setConfigDir` method provided by the loader.
 
-#### `get<T>(key: string, defaultValue?: any): T`
-Retrieves the configuration value for the given key from the current configuration directory. Returns `defaultValue` if the key is not found.
+```typescript
+const loader = config.getConfigLoader();
+loader.setConfigDir(path.resolve(__dirname, 'new-config'));
 
-## Configuration Structure
-The configuration files are expected to be in JSON format and placed in the specified configuration directory. The configuration keys are derived from the nested structure of these files.
+// Now, config values will be loaded from the new directory
+const newAppName = config<string>('app.name');
+console.log(`New App Name: ${newAppName}`);
+```
 
-### Example Configuration Files
-#### config/app.json:
+### Configuration File Formats
+
+Your configuration files can be in either JavaScript or TypeScript or JSON format. The loader will handle both formats seamlessly.
+
+**JavaScript Configuration File (`config/app.js`):**
+
+```javascript
+module.exports = {
+  name: 'MyApp',
+  env: 'development',
+};
+```
+
+**TypeScript Configuration File (`config/database.ts`):**
+
+```typescript
+export default {
+  host: 'localhost',
+  port: 3306,
+};
+```
+
+**JSON Configuration File (`config/app.json`):**
+
 ```json
 {
   "name": "MyApp",
   "env": "development"
 }
 ```
-#### config/database.json:
-```json
-{
-  "host": "localhost",
-  "port": 3306
-}
+
+## API
+
+### `config(key: string, defaultValue?: any): any`
+
+Retrieve the configuration value for the specified key. If the key does not exist, the optional `defaultValue` will be returned.
+
+### `config.initializeConfigLoader(directory: string): void`
+
+Initialize the configuration loader with the directory where your configuration files are located.
+
+### `config.getConfigLoader(): ConfigLoader`
+
+Retrieve the singleton instance of the configuration loader. The `ConfigLoader` interface provides methods to get configuration values and set the configuration directory.
+
+## ConfigLoader Interface
+
+### `setConfigDir(directory: string): void`
+
+Set the configuration directory. This will clear any cached configuration values.
+
+### `get<T>(key: string, defaultValue?: T): T`
+
+Retrieve the configuration value for the specified key. If the key does not exist, the optional `defaultValue` will be returned.
+
+## Example
+
+Here is a complete example to illustrate how to use the `config-js` package:
+
+```typescript
+import { config } from '@teikun-86/config-js';
+import * as path from 'path';
+
+// Initialize the configuration loader
+config.initializeConfigLoader(path.resolve(__dirname, 'config'));
+
+// Retrieve configuration values
+const appName = config<string>('app.name');
+const appEnv = config<string>('app.env');
+const dbHost = config<string>('database.host');
+const dbPort = config<number>('database.port');
+
+console.log(`App Name: ${appName}`);
+console.log(`App Environment: ${appEnv}`);
+console.log(`Database Host: ${dbHost}`);
+console.log(`Database Port: ${dbPort}`);
+
+// Change the configuration directory
+const loader = config.getConfigLoader();
+loader.setConfigDir(path.resolve(__dirname, 'new-config'));
+
+// Retrieve configuration values from the new directory
+const newAppName = config<string>('app.name');
+console.log(`New App Name: ${newAppName}`);
 ```
 
-## Contributing
-Contributions are welcome! Please open an issue or submit a pull request on GitHub.
-
 ## License
-This project is licensed under the MIT License. See the [LICENSE.txt](LICENSE.txt) file for details.
 
+This project is licensed under the MIT License. See the [LICENSE](LICENSE.txt) file for more details.
 
-### Final Note
+## Contributing
 
-This `README.md` covers the basic usage and setup for your `config-js` package, including installation, initialization, usage, and API documentation. It also provides an example configuration structure and outlines how to change the configuration directory at runtime. Make sure to adjust any paths and examples to fit the actual structure and functionality of your package.
+Contributions are welcome! Please open an issue or submit a pull request if you have any improvements or suggestions.
+
+## Acknowledgements
+
+This package was inspired by the need for a simple and flexible configuration loader for Node.js applications, with support for both JavaScript and TypeScript configuration files.
