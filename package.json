@@ -1,9 +1,9 @@
 {
   "name": "@teikun-86/config-js",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "File based config loader for Javascript",
   "main": "dist/index.js",
-  "types": "dist/types.d.ts",
+  "types": "dist/config-js.d.ts",
   "scripts": {
     "test": "jest",
     "build": "tsc --outDir ./dist",
@@ -21,6 +21,7 @@
   "author": "Aziz Febriyanto <azizfebriyanto12@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "fs": "^0.0.1-security",
     "typescript": "^5.4.5"
   },
   "devDependencies": {
