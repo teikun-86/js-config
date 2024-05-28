@@ -15,13 +15,13 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v2
         with:
-          node-version: '16'  # Use the Node.js version your project requires
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
 
       - name: Build project
-        run: npm run build  # Use the appropriate build command for your project
+        run: npm run build
 
       - name: Publish to npm
         run: npm publish
