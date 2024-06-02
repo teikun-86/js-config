@@ -1,1 +1,1 @@
-export { config } from "./ConfigLoader";
+export { config } from "./ConfigLoader.js";

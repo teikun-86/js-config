@@ -1,6 +1,6 @@
 {
   "name": "@teikun-86/config-js",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "File based config loader for Javascript",
   "main": "dist/index.js",
   "types": "dist/config-js.d.ts",
