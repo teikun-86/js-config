@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.config = void 0;
-const fs = require("fs");
-const path = require("path");
+import * as fs from "fs";
+import * as path from "path";
 let configDir = null;
 let cache = {};
 const initializeConfigLoader = (directory) => {
@@ -63,6 +60,6 @@ const config = (key, defaultValue = null) => {
     const loader = getConfigLoader();
     return loader.get(key, defaultValue);
 };
-exports.config = config;
 config.initializeConfigLoader = initializeConfigLoader;
 config.getConfigLoader = getConfigLoader;
+export { config };
