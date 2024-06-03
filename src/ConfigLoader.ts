@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { pathToFileURL } from "url";
 
 export interface ConfigLoader {
 	setConfigDir(directory: string): void;
@@ -8,34 +9,45 @@ export interface ConfigLoader {
 
 export interface Config {
 	<T = any>(key: string, defaultValue?: any): T;
-	initializeConfigLoader: (directory: string) => void;
+	initializeConfigLoader: (directory: string) => Promise<void>;
 	getConfigLoader: () => ConfigLoader;
+	cache: () => Promise<void>;
 }
 
 let configDir: string | null = null;
 let cache: Record<string, any> = {};
 
-const initializeConfigLoader = (directory: string): void => {
+const initializeConfigLoader = async (directory: string): Promise<void> => {
 	if (!fs.existsSync(directory)) {
 		throw new Error(`Configuration directory ${directory} does not exist.`);
 	}
 	configDir = directory;
 	cache = {};
+	await cacheConfig();
 };
 
-const loadConfigFile = (filePath: string): any => {
-	if (fs.existsSync(filePath)) {
-		return require(filePath);
+const loadConfigFile = async (filePath: string): Promise<void> => {
+	const splitted: string[] = filePath.split(".");
+	const extension: string = splitted[splitted.length - 1];
+
+	console.log({
+		filePath,
+		ptf: pathToFileURL(filePath).toString()
+	});
+
+	if (!fs.existsSync(filePath)) {
+		throw new Error(`Configuration file ${filePath} does not exist.`);
 	}
-	const tsFilePath = filePath.replace(/\.js$/, ".ts");
-	if (fs.existsSync(tsFilePath)) {
-		return require(tsFilePath).default;
+
+	if (extension === "js" || extension === "ts") {
+		const { default: config } = await import(pathToFileURL(filePath).toString());
+		return config;
+	} else {
+		const content = fs.readFileSync(filePath, {
+			encoding: "utf8"
+		});
+		return JSON.parse(content);
 	}
-	const jsonFilePath = tsFilePath.replace(/\.ts$/, ".json");
-	if (fs.existsSync(jsonFilePath)) {
-		return require(jsonFilePath);
-	}
-	throw new Error(`Configuration file ${filePath} or ${tsFilePath} or ${jsonFilePath} does not exist.`);
 };
 
 const getConfigLoader = (): ConfigLoader => {
@@ -64,14 +76,19 @@ const getConfigLoader = (): ConfigLoader => {
 			}
 
 			const keys = key.split(".");
-			const configFileName = keys.shift()!;
-			const configFilePath = path.join(configDir, `${configFileName}.js`);
+			let result = cache;
 
-			if (!(configFilePath in cache)) {
-				cache[configFilePath] = loadConfigFile(configFilePath);
+			if (!Object.keys(result).length) {
+				console.log({
+					result,
+					cache,
+					keys
+				});
+
+				throw new Error(
+					"The config is not yet cached. Please call `await config.cache()` first."
+				);
 			}
-
-			let result = cache[configFilePath];
 
 			for (const k of keys) {
 				result = result[k];
@@ -90,6 +107,28 @@ const config: Config = <T = any>(key: string, defaultValue: any = null): T => {
 	return loader.get<T>(key, defaultValue);
 };
 
+const cacheConfig = async () => {
+	cache = {};
+	if (!configDir) {
+		throw new Error(
+			"ConfigLoader has not been initialized with a configuration directory"
+		);
+	}
+
+	const files = fs.readdirSync(configDir);
+	await Promise.all(
+		files.map(async (file) => {
+			const splitted = file.split(".");
+			const configName = splitted[0];
+			cache[configName] = await loadConfigFile(
+				path.resolve(configDir as string, file)
+			);
+		})
+	);
+	console.log({ cache });
+};
+
+config.cache = cacheConfig;
 config.initializeConfigLoader = initializeConfigLoader;
 config.getConfigLoader = getConfigLoader;
 

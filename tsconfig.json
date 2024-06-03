@@ -1,12 +1,23 @@
 {
 	"compilerOptions": {
-		"outDir": "./dist",
-		"rootDir": "./src",
-		"module": "esnext",
-		"target": "esnext",
-		"declaration": true,
+		"module": "ESNext",
+		"esModuleInterop": true,
+		"target": "ESNext",
 		"moduleResolution": "Node",
-		"strict": true
+		"outDir": "dist",
+		"forceConsistentCasingInFileNames": true,
+		"noFallthroughCasesInSwitch": true,
+		"isolatedModules": false,
+		"strict": true,
+		"noImplicitAny": true,
+		"useUnknownInCatchVariables": false,
+		"inlineSourceMap": true,
+		"resolveJsonModule": true
 	},
-	"include": ["src/**/*"]
+	"ts-node": {
+		"esm": true
+	},
+	"lib": ["esnext"],
+	"include": ["src/**/*.ts", "src/**/*.json"],
+	"exclude": ["node_modules", "dist"]
 }

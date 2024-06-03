@@ -1,6 +1,6 @@
 {
   "name": "@teikun-86/config-js",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "File based config loader for Javascript",
   "main": "dist/index.js",
   "types": "dist/config-js.d.ts",
@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "fs": "^0.0.1-security",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
   "devDependencies": {

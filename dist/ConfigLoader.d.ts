@@ -4,8 +4,9 @@ export interface ConfigLoader {
 }
 export interface Config {
     <T = any>(key: string, defaultValue?: any): T;
-    initializeConfigLoader: (directory: string) => void;
+    initializeConfigLoader: (directory: string) => Promise<void>;
     getConfigLoader: () => ConfigLoader;
+    cache: () => Promise<void>;
 }
 declare const config: Config;
 export { config };

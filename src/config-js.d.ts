@@ -8,6 +8,7 @@ declare module "@teikun-86/config-js" {
 		<T = any>(key: string, defaultValue?: any): T;
 		initializeConfigLoader: (directory: string) => void;
 		getConfigLoader: () => ConfigLoader;
+		cache: () => Promise<void>;
 	}
 
 	export const config: Config;
